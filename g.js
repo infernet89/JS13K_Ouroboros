@@ -1,5 +1,5 @@
 // < >
-var DEBUG=0;
+var DEBUG=1;
 //costant
 var TO_RADIANS = Math.PI/180; 
 var borderSize=5;
@@ -17,9 +17,10 @@ var Kpressed=[];
 //game variables
 var snakeHead;
 var snakeSize=20;
-var snakeSpeed=5;
+var snakeSpeed=1;
 var snakeColor="#0F0";
 var tailColor="#0A0";
+var borderColor="#00F";
 
 
 //setup
@@ -41,7 +42,7 @@ function generateLevel()
     snakeHead.x=canvasW/2;
     snakeHead.y=canvasH/2;
     snakeHead.z=0;
-    snakeHead.meat=180;
+    snakeHead.meat=480;
     snakeHead.direction=6;
     snakeHead.next=null;
 }
@@ -52,7 +53,7 @@ function run()
     ctx.fillStyle="#000";
     ctx.fillRect(0,0,canvasW,canvasH);
 
-    ctx.fillStyle="#00F";
+    ctx.fillStyle=borderColor;
     ctx.fillRect(0,0,canvasW,borderSize);
     ctx.fillRect(0,canvasH-borderSize,canvasW,borderSize);
     ctx.fillRect(0,0,borderSize,canvasH);
@@ -114,23 +115,42 @@ function drawSnake(piece)
     if(piece.meat>0)
     {
         ctx.fillStyle=tailColor;
-        if(piece.direction==8)//top
-        {
-            ctx.fillRect(piece.x-snakeSize/2,piece.y+snakeSize/2,snakeSize,piece.meat);
-        }
-        else if(piece.direction==2)//bottom
-        {
-            ctx.fillRect(piece.x-snakeSize/2,piece.y-snakeSize/2,snakeSize,-piece.meat);
-        }
-        else if(piece.direction==4)//left
-        {
-            ctx.fillRect(piece.x+snakeSize/2,piece.y-snakeSize/2,piece.meat,snakeSize);
-        }
-        else if(piece.direction==6)//right
-        {
-            ctx.fillRect(piece.x-snakeSize/2,piece.y-snakeSize/2,-piece.meat,snakeSize);
-        }
+        var rect=getSnakePieceRect(piece);
+        ctx.fillRect(rect.x,rect.y,rect.width,rect.height);
     }  
+}
+function getSnakePieceRect(piece)
+{
+    var res=new Object();
+    if(piece.direction==8)//top
+    {
+        res.x=piece.x-snakeSize/2;
+        res.y=piece.y+snakeSize/2;
+        res.width=snakeSize;
+        res.height=piece.meat;
+    }
+    else if(piece.direction==2)//bottom
+    {
+        res.x=piece.x-snakeSize/2;
+        res.y=piece.y-snakeSize/2;
+        res.width=snakeSize;
+        res.height=-piece.meat;
+    }
+    else if(piece.direction==4)//left
+    {
+        res.x=piece.x+snakeSize/2;
+        res.y=piece.y-snakeSize/2;
+        res.width=piece.meat;
+        res.height=snakeSize;
+    }
+    else if(piece.direction==6)//right
+    {
+        res.x=piece.x-snakeSize/2;
+        res.y=piece.y-snakeSize/2;
+        res.width=-piece.meat
+        res.height=snakeSize;
+    }
+    return res;
 }
 function moveSnake(piece,speed)
 {
@@ -175,11 +195,28 @@ function checkCollisions(piece)
         res=true;
     else if(piece.y-snakeSize<0)
         res=true;
-
+    var tmp=snakeHead.next;
+    var r=null;
+    while(tmp!=null)// && !res)
+    {
+        r=getSnakePieceRect(tmp);
+        if(piece.x+snakeSize>r.x && piece.x-snakeSize<r.x+r.width && piece.y+snakeSize>r.y && piece.y-snakeSize<r.y-r.height)
+        {
+            res=true;
+            if(DEBUG)
+            {
+                ctx.fillStyle="#F00";
+                ctx.fillRect(r.x,r.y,r.width,r.height);
+            }
+        }
+        tmp=tmp.next;
+    }
+    //DEBUG
     if(res)
-        document.title="YES";
+        borderColor="#F00";
     else
-        document.title="NO";
+        borderColor="#00F";
+    //DEBUG
     return res;
 }
 //CONTROLS
