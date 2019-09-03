@@ -61,6 +61,7 @@ function run()
     drawSnake(snakeHead);
     moveSnake(snakeHead,snakeSpeed);
     changeDirection();
+    checkCollisions(snakeHead);
 }
 //controlla in Kpressed se cambiare direction
 function changeDirection()
@@ -163,6 +164,24 @@ function moveSnake(piece,speed)
     }
         
 }
+function checkCollisions(piece)
+{
+    var res=false;
+    if(piece.x-snakeSize<0)
+        res=true;
+    else if(piece.x+snakeSize>canvasW)
+        res=true;
+    else if(piece.y+snakeSize>canvasH)
+        res=true;
+    else if(piece.y-snakeSize<0)
+        res=true;
+
+    if(res)
+        document.title="YES";
+    else
+        document.title="NO";
+    return res;
+}
 //CONTROLS
 function keyDown(e) {
     Kpressed[e.keyCode]=true;
@@ -181,7 +200,7 @@ function rand(da, a)
 }
 function distanceFrom(a,b)
 {
-    return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
+    return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z));
 }
 window.AutoScaler = function(element, initialWidth, initialHeight, skewAllowance){
     var self = this;
