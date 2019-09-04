@@ -21,6 +21,7 @@ var snakeSpeed=1;
 var snakeColor="#0F0";
 var tailColor="#0A0";
 var borderColor="#00F";
+var snakeGrowing=0;
 
 
 //setup
@@ -42,9 +43,12 @@ function generateLevel()
     snakeHead.x=canvasW/2;
     snakeHead.y=canvasH/2;
     snakeHead.z=0;
-    snakeHead.meat=480;
+    snakeHead.meat=40;
     snakeHead.direction=6;
     snakeHead.next=null;
+    //DEBUG
+    snakeGrowing=1000;
+    //DEBUG
 }
 
 function run()
@@ -60,7 +64,7 @@ function run()
     ctx.fillRect(canvasW-borderSize,0,borderSize,canvasH);
 
     drawSnake(snakeHead);
-    moveSnake(snakeHead,snakeSpeed);
+    moveSnake(snakeHead);
     changeDirection();
     checkCollisions(snakeHead);
 }
@@ -84,6 +88,9 @@ function changeDirection()
     {
         newDirection=6;
     }
+    //change direction cooldown
+    if(snakeHead.meat<snakeSize)
+        newDirection=-1;
 
     //he changed direction
     if(newDirection!=-1)
@@ -132,9 +139,9 @@ function getSnakePieceRect(piece)
     else if(piece.direction==2)//bottom
     {
         res.x=piece.x-snakeSize/2;
-        res.y=piece.y-snakeSize/2;
+        res.y=piece.y-snakeSize/2-piece.meat;
         res.width=snakeSize;
-        res.height=-piece.meat;
+        res.height=piece.meat;
     }
     else if(piece.direction==4)//left
     {
@@ -145,62 +152,74 @@ function getSnakePieceRect(piece)
     }
     else if(piece.direction==6)//right
     {
-        res.x=piece.x-snakeSize/2;
+        res.x=piece.x-snakeSize/2-piece.meat;
         res.y=piece.y-snakeSize/2;
-        res.width=-piece.meat
+        res.width=piece.meat;
         res.height=snakeSize;
     }
     return res;
 }
-function moveSnake(piece,speed)
+function moveSnake(piece)
 {
     if(piece.direction==8)//top
     {
-        piece.y-=speed;
+        piece.y-=snakeSpeed;
     }
     else if(piece.direction==2)//bottom
     {
-        piece.y+=speed;
+        piece.y+=snakeSpeed;
     }
     else if(piece.direction==4)//left
     {
-        piece.x-=speed;
+        piece.x-=snakeSpeed;
     }
     else if(piece.direction==6)//right
     {
-        piece.x+=speed;
+        piece.x+=snakeSpeed;
     }    
-    //il resto del serpente
+
+    //se ho altri pezzi attaccati
     if(piece.next!=null)
     {
         piece.meat+=snakeSpeed;
-        
-        if(piece.next.meat>0)
+        while(piece.next!=null)
         {
-            piece.next.meat-=snakeSpeed;
-            moveSnake(piece.next,0);
+            if(piece.next.meat<=0)
+                piece.next=null;
+            else piece=piece.next;
         }
-        else piece.next=null;
+            
+        //l'ultimo della coda, cresce o si sposta
+        if(snakeGrowing>snakeSpeed)
+            snakeGrowing-=snakeSpeed;
+        else piece.meat-=snakeSpeed;
+        //sarebbe dovuto crescere di un pochino
+        if(snakeGrowing<0)
+        {
+            piece.meat+=snakeGrowing;
+            snakeGrowing=0;
+        }
     }
         
 }
 function checkCollisions(piece)
 {
     var res=false;
-    if(piece.x-snakeSize<0)
+    if(piece.x-snakeSize/2<0)
         res=true;
-    else if(piece.x+snakeSize>canvasW)
+    else if(piece.x+snakeSize/2>canvasW)
         res=true;
-    else if(piece.y+snakeSize>canvasH)
+    else if(piece.y+snakeSize/2>canvasH)
         res=true;
-    else if(piece.y-snakeSize<0)
+    else if(piece.y-snakeSize/2<0)
         res=true;
-    var tmp=snakeHead.next;
+    var tmp=piece.next;
     var r=null;
     while(tmp!=null)// && !res)
     {
         r=getSnakePieceRect(tmp);
-        if(piece.x+snakeSize>r.x && piece.x-snakeSize<r.x+r.width && piece.y+snakeSize>r.y && piece.y-snakeSize<r.y-r.height)
+        //console.log("DEBUG: ",r.x,"<",piece.x,"<",r.x+r.width," __ ",piece.y,">",r.y," && ",piece.y,"<",r.y+r.height);
+        if(piece.x+snakeSize/2>r.x && piece.x-snakeSize/2<r.x+r.width && piece.y+snakeSize/2>r.y && piece.y-snakeSize/2<r.y+r.height)
         {
             res=true;
             if(DEBUG)
@@ -211,12 +230,6 @@ function checkCollisions(piece)
         }
         tmp=tmp.next;
     }
-    //DEBUG
-    if(res)
-        borderColor="#F00";
-    else
-        borderColor="#00F";
-    //DEBUG
     return res;
 }
 //CONTROLS
