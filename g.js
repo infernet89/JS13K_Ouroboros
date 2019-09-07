@@ -13,6 +13,11 @@ var canvasH;
 var ctx;
 var activeTask;
 var Kpressed=[];
+var pointer=new Object();
+var startPointer=new Object();
+startPointer.z=0;
+var endPointer=new Object();
+endPointer.z=0;
 
 //game variables
 var snakeHead;
@@ -38,6 +43,14 @@ window.addEventListener('keyup',keyUp,false);
 
 generateLevel();
 activeTask=setInterval(run, 33);
+
+//TODO aggiungere
+canvas.addEventListener("mousedown",cliccatoMouse);
+canvas.addEventListener("mouseup",rilasciatoMouse);
+
+canvas.addEventListener("touchstart", cliccatoTap);
+canvas.addEventListener("touchmove", mossoTap);
+canvas.addEventListener("touchend", rilasciatoTap);
 
 function generateLevel()
 {
@@ -69,7 +82,7 @@ function run()
             snakeGrowing=foods[i].nutriment;
             foods.splice(i,1);
             i=i-1;
-            //invertSnake();
+            //non mi piace più molto.. invertSnake();
         }
         else drawApple(foods[i]);
     }
@@ -83,11 +96,6 @@ function run()
         generateApple();
         newFoodCooldown=rand(20,200);
     }
-        
-
-    //DEBUG
-
-    //DEBUG
 }
 //controlla in Kpressed se cambiare direction
 function changeDirection()
@@ -112,9 +120,20 @@ function changeDirection()
     //change direction cooldown
     if(snakeHead.meat<snakeSize)
         newDirection=-1;
+    //not allowed changes (if you do, the snake inverts?)
+    if( (snakeHead.direction==2 && newDirection==8) ||
+        (snakeHead.direction==8 && newDirection==2) ||
+        (snakeHead.direction==4 && newDirection==6) ||
+        (snakeHead.direction==6 && newDirection==4) )
+        {
+            newDirection=-1;
+            invertSnake();
+                for(i=0;i<100;i++)
+                Kpressed[i]=false;
+        }
 
     //he changed direction
-    if(newDirection!=-1)
+    if(newDirection!=-1 && snakeHead.direction!=newDirection)
     {
         oldHead=snakeHead;
         snakeHead=new Object();
@@ -124,7 +143,8 @@ function changeDirection()
         snakeHead.direction=newDirection;
         snakeHead.meat=0;
         snakeHead.next=oldHead;
-
+        for(i=0;i<100;i++)
+            Kpressed[i]=false;
     }
 }
 function drawSnake(piece)
@@ -164,8 +184,8 @@ function generateApple()
     apple.color="#A00";
     apple.growth=0;
     
-    apple.x=rand(0,canvasW);
-    apple.y=rand(0,canvasH);
+    apple.x=rand(snakeSize,canvasW-snakeSize);
+    apple.y=rand(snakeSize,canvasH-snakeSize);
     apple.z=0;
 
     foods.push(apple);
@@ -283,33 +303,119 @@ function checkCollisions(piece)
     return res;
 }
 function invertSnake()
-{//TODO this does not work
+{
     var tmp=snakeHead;
     var prev=null;
     var next=null;
     while(tmp!=null)
     {
+        //invert direction
+        if(tmp.direction==2)
+        {
+            tmp.direction=8;
+            tmp.y-=tmp.meat;
+        }
+        else if(tmp.direction==8)
+        {
+            tmp.direction=2;
+            tmp.y+=tmp.meat;
+        }
+        else if(tmp.direction==4)
+        {
+            tmp.direction=6;
+            tmp.x+=tmp.meat;
+        }
+        else if(tmp.direction==6)
+        {
+            tmp.direction=4;
+            tmp.x-=tmp.meat;
+        }
         next=tmp.next;
         tmp.next=prev;
         prev=tmp;
         tmp=next;
     }
     snakeHead=prev;
-    switch(snakeHead.direction)
-    {
-        case 8: snakeHead.direction=2;break;
-        case 2: snakeHead.direction=8;break;
-        case 4: snakeHead.direction=6;break;
-        case 6: snakeHead.direction=4;break;
-    }
+}
+function translateControls(startPoint, endPoint)
+{
+    var dx=Math.abs(startPoint.x-endPoint.x);
+    var dy=Math.abs(startPoint.y-endPoint.y);
+    var dz=Math.abs(startPoint.z-endPoint.z);
 
+    //lo spostamento sull'asse X è il maggiore
+    if(dx>dy && dx>dz)
+    {
+        //verso sinistra
+        if(startPoint.x>endPoint.x)
+            Kpressed[37]=true;
+        //verso destra
+        else Kpressed[39]=true;
+    }
+    //spostamento sull'asse Y
+    else if(dy>dx && dy>dz)
+    {
+        if(startPoint.y>endPoint.y)
+            Kpressed[38]=true;
+        else
+            Kpressed[40]=true;
+    }
+    //asse Z
+    else if(dz>dx && dz>dy)
+    {
+        //TODO definisci prima i comandi
+    }
 }
 //CONTROLS
+function cliccatoTap(evt)
+{
+    evt.preventDefault();
+    dragging=true;
+    pointer.x = evt.targetTouches[0].pageX,
+    pointer.y = evt.targetTouches[0].pageY;
+    startPointer.x = pointer.x;
+    startPointer.y = pointer.y;
+}
+function mossoTap(evt)
+{
+    evt.preventDefault();
+    dragging=true;
+    pointer.x = evt.targetTouches[0].pageX,
+    pointer.y = evt.targetTouches[0].pageY;
+}
+function rilasciatoTap(evt)
+{
+    evt.preventDefault();
+    dragging=false;
+    endPointer.x = pointer.x;
+    endPointer.y = pointer.y;
+    translateControls(startPointer,endPointer);
+}
+
+function cliccatoMouse(evt)
+{
+    dragging=true;
+    var rect = canvas.getBoundingClientRect();
+    pointer.x=(evt.clientX-rect.left)/(rect.right-rect.left)*window.innerWidth;
+    pointer.y=(evt.clientY-rect.top)/(rect.bottom-rect.top)*window.innerHeight;
+}
+function rilasciatoMouse(evt)
+{
+    dragging=false;
+    var rect = canvas.getBoundingClientRect();
+    startPointer.x = pointer.x;
+    startPointer.y = pointer.y;
+    endPointer.x = (evt.clientX-rect.left)/(rect.right-rect.left)*window.innerWidth;
+    endPointer.y = (evt.clientY-rect.top)/(rect.bottom-rect.top)*window.innerHeight; 
+    translateControls(startPointer,endPointer);
+}
 function keyDown(e) {
     Kpressed[e.keyCode]=true;
 }
 function keyUp(e) {
     Kpressed[e.keyCode]=false;
+    if(DEBUG)
+        console.log(e.keyCode);
 }
 /*#############
     Funzioni Utili
