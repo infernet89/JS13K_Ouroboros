@@ -1,5 +1,5 @@
 // < >
-var DEBUG=1;
+var DEBUG=0;
 //costant
 var TO_RADIANS = Math.PI/180; 
 var borderSize=5;
@@ -12,6 +12,7 @@ var canvasW;
 var canvasH;
 var ctx;
 var activeTask;
+var dragging=false;
 var Kpressed=[];
 var pointer=new Object();
 var startPointer=new Object();
@@ -20,6 +21,7 @@ var endPointer=new Object();
 endPointer.z=0;
 
 //game variables
+var level;
 var snakeHead;
 var snakeSize=20;
 var snakeSpeed=5;
@@ -29,6 +31,8 @@ var borderColor="#00F";
 var snakeGrowing=0;
 var foods=[];
 var newFoodCooldown=0;
+var gameOverCoooldown=0;
+var titlePosition=0;
 
 
 //setup
@@ -36,6 +40,7 @@ canvas = document.getElementById("g");
 ctx = canvas.getContext("2d");
 canvasW=canvas.width  = defaultWidth;//window.innerWidth;
 canvasH=canvas.height = defaultHeight;//window.innerHeight;
+level=-1;
 
 //controls
 window.addEventListener('keydown',keyDown,false);
@@ -59,8 +64,25 @@ function generateLevel()
     snakeHead.y=canvasH/2;
     snakeHead.z=0;
     snakeHead.meat=40;
-    snakeHead.direction=6;
+    snakeHead.direction=2*rand(1,4);
     snakeHead.next=null;
+    snakeHead.growth=0;
+    snakeGrowing=0;
+    foods=[]
+    newFoodCooldown=0;
+}
+function gameOver()
+{
+    level=2;
+    for(i=0;i<foods.length;i++)
+        foods[i].growth=2;
+    var tmp=snakeHead;
+    while(tmp!=null)
+    {
+        tmp.growth=2;
+        tmp=tmp.next;
+    }
+    gameOverCoooldown=300;
 }
 
 function run()
@@ -74,28 +96,103 @@ function run()
     ctx.fillRect(0,canvasH-borderSize,canvasW,borderSize);
     ctx.fillRect(0,0,borderSize,canvasH);
     ctx.fillRect(canvasW-borderSize,0,borderSize,canvasH);
-
-    for(i=0;i<foods.length;i++)
+    //MENU
+    if(level==-1)
     {
-        if(distanceFrom(snakeHead,foods[i])<snakeSize/2+foods[i].size/2)
+        ctx.fillStyle="#EEE";
+        ctx.font = "80px Courier New";
+        ctx.fillText("OUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROSOUROBOROS",
+            titlePosition-=2,200);
+        if(titlePosition<-10000)
+            titlePosition=0;
+        ctx.font = "25px Courier New";
+        if(-titlePosition%30<20)
+            ctx.fillText("Press any key to continue",canvasW/2-200,canvasH-100);
+        //credits
+        ctx.font = "12px Courier New";
+        ctx.fillText("Made for JS13KGames competition",12,canvasH-12);
+        ctx.fillText("by Infernet89",canvasW-100,canvasH-12);
+
+        for(i=0;i<100;i++)
+            if(Kpressed[i])
+            {
+                dragging=true;
+                Kpressed[i]=false;
+            }
+                
+        if(dragging)
         {
-            snakeGrowing=foods[i].nutriment;
-            foods.splice(i,1);
-            i=i-1;
-            //non mi piace più molto.. invertSnake();
+            level=0;
+            generateLevel();
         }
-        else drawApple(foods[i]);
     }
-    drawSnake(snakeHead);
-    moveSnake(snakeHead);
-    changeDirection();
-    checkCollisions(snakeHead);
-
-    if(newFoodCooldown--<0)
+    //Actual game
+    else if(level==0)
     {
-        generateApple();
-        newFoodCooldown=rand(20,200);
+        if(snakeHead.growth<1)
+            snakeHead.growth+=0.1;
+        for(i=0;i<foods.length;i++)
+        {
+            if(distanceFrom(snakeHead,foods[i])<snakeSize/2+foods[i].size/2)
+            {
+                snakeGrowing=foods[i].nutriment;
+                foods.splice(i,1);
+                i=i-1;
+                //non mi piace più molto.. invertSnake();
+            }
+            else
+            {
+                drawApple(foods[i]);
+                //animazione di crescita
+                if(foods[i].growth<=1)
+                    foods[i].growth+=0.1;
+            }
+        }
+        drawSnake(snakeHead);
+        moveSnake(snakeHead);
+        changeDirection();
+        if(checkCollisions(snakeHead))
+        {
+            gameOver();
+        }
+
+        if(newFoodCooldown--<0)
+        {
+            generateApple();
+            newFoodCooldown=rand(20,200);
+        }
     }
+    //GameOver
+    else if(level==2)
+    {
+        for(i=0;i<foods.length;i++)
+        {
+            drawApple(foods[i]);
+            if(foods[i].growth>0)
+                foods[i].growth-=0.05;
+        }
+        drawSnake(snakeHead);
+        var tmp=snakeHead;
+        while(tmp!=null)
+        {
+            if(tmp.growth>0)
+                tmp.growth-=0.05;
+            tmp=tmp.next;
+        }
+        if(gameOverCoooldown--<0)
+        {
+            level=0;
+            generateLevel();
+        }
+        else if(gameOverCoooldown<200)
+        {
+            ctx.fillStyle="#EEE";
+            ctx.font = "100px Courier New";
+            if(gameOverCoooldown%30<15)
+                ctx.fillText("GAME OVER",canvasW/2-250,250);
+        }
+    }
+    
 }
 //controlla in Kpressed se cambiare direction
 function changeDirection()
@@ -142,6 +239,7 @@ function changeDirection()
         snakeHead.z=oldHead.z;
         snakeHead.direction=newDirection;
         snakeHead.meat=0;
+        snakeHead.growth=1;
         snakeHead.next=oldHead;
         for(i=0;i<100;i++)
             Kpressed[i]=false;
@@ -158,7 +256,8 @@ function drawSnake(piece)
         ctx.fillStyle=snakeColor;
     else
         ctx.fillStyle=tailColor;
-    ctx.fillRect(piece.x-snakeSize/2,piece.y-snakeSize/2,snakeSize,snakeSize);
+    var size=piece.growth*snakeSize;
+    ctx.fillRect(piece.x-size/2,piece.y-size/2,size,size);
     //il resto del pezzo, in base alla direzione
     if(piece.meat>0)
     {
@@ -172,14 +271,11 @@ function drawApple(a)
     ctx.fillStyle=a.color;
     var size=(a.size/2)*a.growth;
     ctx.fillRect(a.x-size,a.y-size,size,size);
-    //animazione di crescita
-    if(a.growth<=1)
-        a.growth+=0.1;
 }
 function generateApple()
 {
     var apple=new Object();
-    apple.nutriment=rand(10,100);
+    apple.nutriment=rand(50,400);
     apple.size=rand(snakeSize*0.5,snakeSize*1.5);
     apple.color="#A00";
     apple.growth=0;
@@ -194,41 +290,42 @@ function generateApple()
 function getSnakePieceRect(piece)
 {
     var res=new Object();
+    var size=snakeSize*piece.growth;
     if(piece.direction==8)//top
     {
-        res.x=piece.x-snakeSize/2;
-        res.y=piece.y+snakeSize/2;
+        res.x=piece.x-size/2;
+        res.y=piece.y+size/2;
         res.z=piece.z;
-        res.width=snakeSize;
+        res.width=size;
         res.height=piece.meat;
-        res.depth=snakeSize;
+        res.depth=size;
     }
     else if(piece.direction==2)//bottom
     {
-        res.x=piece.x-snakeSize/2;
-        res.y=piece.y-snakeSize/2-piece.meat;
+        res.x=piece.x-size/2;
+        res.y=piece.y-size/2-piece.meat;
         res.z=piece.z;
-        res.width=snakeSize;
+        res.width=size;
         res.height=piece.meat;
-        res.depth=snakeSize;
+        res.depth=size;
     }
     else if(piece.direction==4)//left
     {
-        res.x=piece.x+snakeSize/2;
-        res.y=piece.y-snakeSize/2;
+        res.x=piece.x+size/2;
+        res.y=piece.y-size/2;
         res.z=piece.z;
         res.width=piece.meat;
-        res.height=snakeSize;
-        res.depth=snakeSize;
+        res.height=size;
+        res.depth=size;
     }
     else if(piece.direction==6)//right
     {
-        res.x=piece.x-snakeSize/2-piece.meat;
-        res.y=piece.y-snakeSize/2;
+        res.x=piece.x-size/2-piece.meat;
+        res.y=piece.y-size/2;
         res.z=piece.z;
         res.width=piece.meat;
-        res.height=snakeSize;
-        res.depth=snakeSize;
+        res.height=size;
+        res.depth=size;
     }
     return res;
 }
@@ -290,14 +387,9 @@ function checkCollisions(piece)
         if (piece.x+snakeSize/2>r.x && piece.x-snakeSize/2<r.x+r.width && 
             piece.y+snakeSize/2>r.y && piece.y-snakeSize/2<r.y+r.height &&
             piece.z+snakeSize/2>r.z && piece.z-snakeSize/2<r.z+r.depth)
-        {
-            res=true;
-            if(DEBUG)
             {
-                ctx.fillStyle="#F00";
-                ctx.fillRect(r.x,r.y,r.width,r.height);
+                res=true;
             }
-        }
         tmp=tmp.next;
     }
     return res;
@@ -415,7 +507,11 @@ function keyDown(e) {
 function keyUp(e) {
     Kpressed[e.keyCode]=false;
     if(DEBUG)
+    {
         console.log(e.keyCode);
+        if(e.keyCode==32)
+            gameOver();
+    }
 }
 /*#############
     Funzioni Utili
