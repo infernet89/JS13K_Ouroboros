@@ -8,8 +8,8 @@ var defaultHeight=800;
 
 //global variables
 var canvas;
-var canvasW;
-var canvasH;
+var canvasW=1200;
+var canvasH=800;
 var ctx;
 var activeTask;
 var dragging=false;
@@ -34,29 +34,29 @@ var newFoodCooldown=0;
 var gameOverCoooldown=0;
 var titlePosition=0;
 
+function setup()
+{
+    //setup
+    canvas = document.getElementById("g");
+    ctx = canvas.getContext("2d");
+    canvasW=canvas.width  = defaultWidth;//window.innerWidth;
+    canvasH=canvas.height = defaultHeight;//window.innerHeight;
+    level=-1;
 
-//setup
-canvas = document.getElementById("g");
-ctx = canvas.getContext("2d");
-canvasW=canvas.width  = defaultWidth;//window.innerWidth;
-canvasH=canvas.height = defaultHeight;//window.innerHeight;
-level=-1;
+    //controls
+    window.addEventListener('keydown',keyDown,false);
+    window.addEventListener('keyup',keyUp,false);
 
-//controls
-window.addEventListener('keydown',keyDown,false);
-window.addEventListener('keyup',keyUp,false);
+    generateLevel();
+    activeTask=setInterval(run, 33);
 
-generateLevel();
-activeTask=setInterval(run, 33);
-
-//TODO aggiungere
-canvas.addEventListener("mousedown",cliccatoMouse);
-canvas.addEventListener("mouseup",rilasciatoMouse);
-
-canvas.addEventListener("touchstart", cliccatoTap);
-canvas.addEventListener("touchmove", mossoTap);
-canvas.addEventListener("touchend", rilasciatoTap);
-
+    //Controls
+    canvas.addEventListener("mousedown",cliccatoMouse);
+    canvas.addEventListener("mouseup",rilasciatoMouse);
+    canvas.addEventListener("touchstart", cliccatoTap);
+    canvas.addEventListener("touchmove", mossoTap);
+    canvas.addEventListener("touchend", rilasciatoTap);
+}
 function generateLevel()
 {
     snakeHead=new Object();

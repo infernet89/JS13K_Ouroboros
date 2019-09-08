@@ -7,9 +7,6 @@
 	
 	</head>
 	<body>
-
-	
-
 		<script type="module">
 			//import * as THREE from 'https://threejs.org/examples/../build/three.module.js';
 			import * as THREE from './three.module.js';
@@ -24,29 +21,27 @@
 			var clock = new THREE.Clock();
 			init();
 			animate();
-			//<BoxLineGeometry>
 
-			//<BoxLineGeometry>
 			function init() {
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x505050 );
+				scene.background = new THREE.Color( 0x101010 );
 				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 10 );
 				room = new THREE.LineSegments(
-					new BoxLineGeometry( 6, 6, 6, 10, 10, 10 ),
-					new THREE.LineBasicMaterial( { color: 0x808080 } )
+					new BoxLineGeometry( 4, 4, 4, 10, 10, 10 ),
+					new THREE.LineBasicMaterial( { color: 0xB0F0B0 } )
 				);
-				room.geometry.translate( 0, 3, 0 );
+				room.geometry.translate( 0, 2, 0 );
 				scene.add( room );
 				var light = new THREE.HemisphereLight( 0xffffff, 0x444444 );
 				light.position.set( 1, 1, 1 );
 				scene.add( light );
 				//var geometry = new THREE.IcosahedronBufferGeometry( radius, 2 );
 				var geometry = new THREE.BoxGeometry( radius, radius, radius );
-				for ( var i = 0; i < 200; i ++ ) {
+				for ( var i = 0; i < 100; i ++ ) {
 					var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
-					object.position.x = Math.random() * 4 - 2;
-					object.position.y = Math.random() * 4;
-					object.position.z = Math.random() * 4 - 2;
+					object.position.x = 0;//Math.random() * 4 - 2;
+					object.position.y = 0;//Math.random() * 4;
+					object.position.z = 0;//Math.random() * 4 - 2;
 					/*object.userData.velocity = new THREE.Vector3();
 					object.userData.velocity.x = Math.random() * 0.01 - 0.005;
 					object.userData.velocity.y = Math.random() * 0.01 - 0.005;
