@@ -40,7 +40,7 @@
 		    snakeHead.x=0;
 		    snakeHead.y=1;
 		    snakeHead.z=0;
-		    snakeHead.meat=0.04;
+		    snakeHead.meat=0.4;
 		    do
 		    {
 		    	snakeHead.direction=rand(2,8);
@@ -51,11 +51,22 @@
 		    foods=[]
 		    newFoodCooldown=0;
 		    //3d
-		    var geometry = new THREE.BoxGeometry( snakeSize, snakeSize, snakeSize );
-		    snakeHead.tdObject=new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: snakeColor } ) );
+		    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+		    snakeHead.tdHeadObject=new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: snakeColor } ) );
+		    snakeHead.tdHeadObject.position.x=snakeHead.x;
+		    snakeHead.tdHeadObject.position.y=snakeHead.y;
+		    snakeHead.tdHeadObject.position.z=snakeHead.z;
+		    snakeHead.tdHeadObject.scale.x=snakeSize-0.01;
+		    snakeHead.tdHeadObject.scale.y=snakeSize+0.01;
+		    snakeHead.tdHeadObject.scale.z=snakeSize-0.01;
+		    room.add(snakeHead.tdHeadObject);
+		    snakeHead.tdObject=new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: tailColor } ) );
 		    snakeHead.tdObject.position.x=snakeHead.x;
 		    snakeHead.tdObject.position.y=snakeHead.y;
 		    snakeHead.tdObject.position.z=snakeHead.z;
+		    snakeHead.tdObject.scale.x=snakeSize;
+		    snakeHead.tdObject.scale.y=snakeSize;
+		    snakeHead.tdObject.scale.z=snakeSize;
 		    room.add(snakeHead.tdObject);
 		}
 		function moveSnake(piece)
@@ -64,31 +75,37 @@
 		    {
 		        piece.y-=snakeSpeed;
 		        piece.tdObject.position.y=piece.y;
+		        piece.tdHeadObject.position.y=piece.y;
 		    }
 		    else if(piece.direction==2)//bottom
 		    {
 		        piece.y+=snakeSpeed;
 		        piece.tdObject.position.y=piece.y;
+		        piece.tdHeadObject.position.y=piece.y;
 		    }
 		    else if(piece.direction==4)//left
 		    {
 		        piece.x-=snakeSpeed;
 		        piece.tdObject.position.x=piece.x;
+		        piece.tdHeadObject.position.x=piece.x;
 		    }
 		    else if(piece.direction==6)//right
 		    {
 		        piece.x+=snakeSpeed;
 		        piece.tdObject.position.x=piece.x;
+		        piece.tdHeadObject.position.x=piece.x;
 		    }
 		    else if(piece.direction==5)//allontana
 		    {
 		        piece.z+=snakeSpeed;
 		        piece.tdObject.position.z=piece.z;
+		        piece.tdHeadObject.position.z=piece.z;
 		    }
 		    else if(piece.direction==7)//avvicina
 		    {
 		        piece.z-=snakeSpeed;
 		        piece.tdObject.position.z=piece.z;
+		        piece.tdHeadObject.position.z=piece.z;
 		    }
 		    //crescita
 		    piece.meat+=snakeSpeed;
@@ -109,7 +126,39 @@
 		        piece.meat+=snakeGrowing;
 		        snakeGrowing=0;
 		    }
-		    //aggiusta il tdobject in base alla crescita
+
+		    //aggiusta il tdObject in base alla crescita
+		    if(piece.direction==8)//top
+		    {
+		        piece.tdObject.scale.y=snakeSize+piece.meat;
+		        piece.tdObject.position.y+=piece.meat/2;
+		    }
+		    else if(piece.direction==2)//bottom
+		    {
+		        piece.tdObject.scale.y=snakeSize+piece.meat;
+		        piece.tdObject.position.y-=piece.meat/2;
+		    }
+		    else if(piece.direction==4)//left
+		    {
+		        piece.tdObject.scale.x=snakeSize+piece.meat;
+		        piece.tdObject.position.x+=piece.meat/2;
+		    }
+		    else if(piece.direction==6)//right
+		    {
+		        piece.tdObject.scale.x=snakeSize+piece.meat;
+		        piece.tdObject.position.x-=piece.meat/2;
+		    }
+		    else if(piece.direction==5)//allontana
+		    {
+		        piece.tdObject.scale.z=snakeSize+piece.meat;
+		        piece.tdObject.position.z-=piece.meat/2;
+		    }
+		    else if(piece.direction==7)//avvicina
+		    {
+		        piece.tdObject.scale.z=snakeSize+piece.meat;
+		        piece.tdObject.position.z+=piece.meat/2;
+		    }
+		    
 		}
 		//3d Functions
 		function init() {
@@ -187,6 +236,8 @@
 				object.userData.velocity.z = ( Math.random() - 9 );
 				object.userData.velocity.applyQuaternion( controller.quaternion );*/
 				if ( count === room.children.length ) count = 0;
+				//DEBUG
+		    	snakeHead.tdObject.geometry.scale(1,1,1.01);
 			}
 		}
 		//
