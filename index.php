@@ -56,9 +56,9 @@
 		    snakeHead.tdHeadObject.position.x=snakeHead.x;
 		    snakeHead.tdHeadObject.position.y=snakeHead.y;
 		    snakeHead.tdHeadObject.position.z=snakeHead.z;
-		    snakeHead.tdHeadObject.scale.x=snakeSize-0.01;
+		    snakeHead.tdHeadObject.scale.x=snakeSize+0.01;
 		    snakeHead.tdHeadObject.scale.y=snakeSize+0.01;
-		    snakeHead.tdHeadObject.scale.z=snakeSize-0.01;
+		    snakeHead.tdHeadObject.scale.z=snakeSize+0.01;
 		    room.add(snakeHead.tdHeadObject);
 		    snakeHead.tdObject=new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: tailColor } ) );
 		    snakeHead.tdObject.position.x=snakeHead.x;
@@ -73,13 +73,13 @@
 		{
 		    if(piece.direction==8)//top
 		    {
-		        piece.y-=snakeSpeed;
+		        piece.y+=snakeSpeed;
 		        piece.tdObject.position.y=piece.y;
 		        piece.tdHeadObject.position.y=piece.y;
 		    }
 		    else if(piece.direction==2)//bottom
 		    {
-		        piece.y+=snakeSpeed;
+		        piece.y-=snakeSpeed;
 		        piece.tdObject.position.y=piece.y;
 		        piece.tdHeadObject.position.y=piece.y;
 		    }
@@ -131,12 +131,12 @@
 		    if(piece.direction==8)//top
 		    {
 		        piece.tdObject.scale.y=snakeSize+piece.meat;
-		        piece.tdObject.position.y+=piece.meat/2;
+		        piece.tdObject.position.y-=piece.meat/2;
 		    }
 		    else if(piece.direction==2)//bottom
 		    {
 		        piece.tdObject.scale.y=snakeSize+piece.meat;
-		        piece.tdObject.position.y-=piece.meat/2;
+		        piece.tdObject.position.y+=piece.meat/2;
 		    }
 		    else if(piece.direction==4)//left
 		    {
@@ -159,6 +159,29 @@
 		        piece.tdObject.position.z+=piece.meat/2;
 		    }
 		    
+		}
+		function getChosenDirection(dx,dy,dz)
+		{
+			var res=7;
+			if(Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>Math.abs(dz))
+			{
+				if(dx>0)
+					res=4;
+				else res=6;
+			}				
+			else if(Math.abs(dy)>Math.abs(dx) && Math.abs(dy)>Math.abs(dz))
+			{
+				if(dy>0)
+					res=2;
+				else res=8;
+			}
+			else if(Math.abs(dz)>Math.abs(dx) && Math.abs(dz)>Math.abs(dy))
+			{
+				if(dz>0)
+					res=7;
+				else res=5;
+			}
+			return res;
 		}
 		//3d Functions
 		function init() {
@@ -198,9 +221,16 @@
 			// controllers
 			function onSelectStart() {
 				this.userData.isSelecting = true;
+				this.userData.startPx=this.position.x;
+				this.userData.startPy=this.position.y;
+				this.userData.startPz=this.position.z;
 			}
 			function onSelectEnd() {
 				this.userData.isSelecting = false;
+				this.userData.endPx=this.position.x;
+				this.userData.endPy=this.position.y;
+				this.userData.endPz=this.position.z;
+				snakeHead.direction=getChosenDirection(this.userData.startPx-this.userData.endPx,this.userData.startPy-this.userData.endPy,this.userData.startPz-this.userData.endPz);
 			}
 			controller1 = renderer.vr.getController( 0 );
 			controller1.addEventListener( 'selectstart', onSelectStart );
@@ -236,8 +266,6 @@
 				object.userData.velocity.z = ( Math.random() - 9 );
 				object.userData.velocity.applyQuaternion( controller.quaternion );*/
 				if ( count === room.children.length ) count = 0;
-				//DEBUG
-		    	snakeHead.tdObject.geometry.scale(1,1,1.01);
 			}
 		}
 		//
@@ -245,8 +273,8 @@
 			renderer.setAnimationLoop( render );
 		}
 		function render() {
-			handleController( controller1 );
-			handleController( controller2 );
+			/*handleController( controller1 );
+			handleController( controller2 );*/
 			//snake functions
 			moveSnake(snakeHead);
 			//
