@@ -69,6 +69,29 @@
 		    snakeHead.tdObject.scale.z=snakeSize;
 		    room.add(snakeHead.tdObject);
 		}
+		function generateApple()
+		{
+		    var apple=new Object();
+		    apple.nutriment=rand(20,100)*0.01;
+		    apple.size=rand(200,1050)*0.001*snakeSize;
+		    apple.color=0xAA0000;
+		    apple.growth=0;
+		    
+		    apple.x=rand(-2000,2000)*0.0009;
+		    apple.y=rand(200,4000)*0.0009;
+		    apple.z=rand(-2000,2000)*0.0009;
+
+		    apple.tdObject=new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: apple.color } ) );
+		    apple.tdObject.position.x=apple.x;
+		    apple.tdObject.position.y=apple.y;
+		    apple.tdObject.position.z=apple.z;
+		    apple.tdObject.scale.x=apple.size*apple.growth;
+		    apple.tdObject.scale.y=apple.size*apple.growth;
+		    apple.tdObject.scale.z=apple.size*apple.growth;
+		    room.add(apple.tdObject);
+
+		    foods.push(apple);
+		}
 		function moveSnake()
 		{
 			var piece=snakeHead;
@@ -116,7 +139,7 @@
 		    //trova l'ultimo elemento
 		    while(piece.next!=null)
 		    {
-		        if(piece.next.meat<=0)
+		        if(piece.next.meat<=snakeSpeed)
 		        {
 		            room.remove(piece.next.tdObject);
 		            piece.next=null;
@@ -228,7 +251,7 @@
 			    snakeHead.tdObject.scale.x=snakeSize;
 			    snakeHead.tdObject.scale.y=snakeSize;
 			    snakeHead.tdObject.scale.z=snakeSize;
-			    room.add(snakeHead.tdObject);
+			    setTimeout(function() { room.add(snakeHead.tdObject); }, 5);//delayed add
 
 		        snakeHead.direction=newDirection;
 		        snakeHead.meat=0;
@@ -305,6 +328,30 @@
 
 			//snake functions
 			moveSnake();
+			for(var i=0;i<foods.length;i++)
+			{
+				 if(distanceFrom(snakeHead,foods[i])<snakeSize/2+foods[i].size/2)
+	            {
+	                snakeGrowing=foods[i].nutriment;
+	                room.remove(foods[i].tdObject);
+	                foods.splice(i,1);
+	                i=i-1;
+	                continue;
+	            }
+				if(foods[i].growth<=1)
+				{
+                    foods[i].growth+=0.01;
+                    foods[i].tdObject.scale.x=foods[i].size*foods[i].growth;
+				    foods[i].tdObject.scale.y=foods[i].size*foods[i].growth;
+				    foods[i].tdObject.scale.z=foods[i].size*foods[i].growth;
+                }
+            }
+
+	        if(newFoodCooldown--<0)
+	        {
+	            generateApple();
+	            newFoodCooldown=rand(200,900);
+	        }
 
 			renderer.render( scene, camera );
 		}
