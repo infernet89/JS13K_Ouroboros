@@ -256,7 +256,7 @@ function drawSnake(piece)
         ctx.fillStyle=snakeColor;
     else
         ctx.fillStyle=tailColor;
-    var size=piece.growth*snakeSize;
+    var size=piece.growth*(snakeSize+1);
     ctx.fillRect(piece.x-size/2,piece.y-size/2,size,size);
     //il resto del pezzo, in base alla direzione
     if(piece.meat>0)

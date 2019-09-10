@@ -30,6 +30,7 @@
 		var normal = new THREE.Vector3();
 		var relativeVelocity = new THREE.Vector3();
 		var clock = new THREE.Clock();
+		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
 		init();
 		animate();
 
@@ -39,7 +40,7 @@
 		    snakeHead=new Object();
 		    snakeHead.x=0;
 		    snakeHead.y=1;
-		    snakeHead.z=0;
+		    snakeHead.z=-1;
 		    snakeHead.meat=0.4;
 		    do
 		    {
@@ -51,7 +52,6 @@
 		    foods=[]
 		    newFoodCooldown=0;
 		    //3d
-		    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
 		    snakeHead.tdHeadObject=new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: snakeColor } ) );
 		    snakeHead.tdHeadObject.position.x=snakeHead.x;
 		    snakeHead.tdHeadObject.position.y=snakeHead.y;
@@ -69,8 +69,9 @@
 		    snakeHead.tdObject.scale.z=snakeSize;
 		    room.add(snakeHead.tdObject);
 		}
-		function moveSnake(piece)
+		function moveSnake()
 		{
+			var piece=snakeHead;
 		    if(piece.direction==8)//top
 		    {
 		        piece.y+=snakeSpeed;
@@ -109,10 +110,17 @@
 		    }
 		    //crescita
 		    piece.meat+=snakeSpeed;
+
+		    fixtdObject(piece);
+
+		    //trova l'ultimo elemento
 		    while(piece.next!=null)
 		    {
 		        if(piece.next.meat<=0)
+		        {
+		            room.remove(piece.next.tdObject);
 		            piece.next=null;
+		        }
 		        else piece=piece.next;
 		    }
 		        
@@ -127,38 +135,43 @@
 		        snakeGrowing=0;
 		    }
 
-		    //aggiusta il tdObject in base alla crescita
+		    if(piece!=snakeHead)
+		    	fixtdObject(piece);
+		    
+		}
+		function fixtdObject(piece)
+		{
+			//aggiusta il tdObject in base alla crescita
 		    if(piece.direction==8)//top
 		    {
 		        piece.tdObject.scale.y=snakeSize+piece.meat;
-		        piece.tdObject.position.y-=piece.meat/2;
+		        piece.tdObject.position.y=piece.y-piece.meat/2;
 		    }
 		    else if(piece.direction==2)//bottom
 		    {
 		        piece.tdObject.scale.y=snakeSize+piece.meat;
-		        piece.tdObject.position.y+=piece.meat/2;
+		        piece.tdObject.position.y=piece.y+piece.meat/2;
 		    }
 		    else if(piece.direction==4)//left
 		    {
 		        piece.tdObject.scale.x=snakeSize+piece.meat;
-		        piece.tdObject.position.x+=piece.meat/2;
+		        piece.tdObject.position.x=piece.x+piece.meat/2;
 		    }
 		    else if(piece.direction==6)//right
 		    {
 		        piece.tdObject.scale.x=snakeSize+piece.meat;
-		        piece.tdObject.position.x-=piece.meat/2;
+		        piece.tdObject.position.x=piece.x-piece.meat/2;
 		    }
 		    else if(piece.direction==5)//allontana
 		    {
 		        piece.tdObject.scale.z=snakeSize+piece.meat;
-		        piece.tdObject.position.z-=piece.meat/2;
+		        piece.tdObject.position.z=piece.z-piece.meat/2;
 		    }
 		    else if(piece.direction==7)//avvicina
 		    {
 		        piece.tdObject.scale.z=snakeSize+piece.meat;
-		        piece.tdObject.position.z+=piece.meat/2;
+		        piece.tdObject.position.z=piece.z+piece.meat/2;
 		    }
-		    
 		}
 		function getChosenDirection(dx,dy,dz)
 		{
@@ -183,6 +196,47 @@
 			}
 			return res;
 		}
+		function changeDirection(newDirection)
+		{
+		    //change direction cooldown
+		    if(snakeHead.meat<snakeSize)
+		        newDirection=-1;
+		    /*/TODO not allowed changes (if you do, the snake inverts?)
+		    if( (snakeHead.direction==2 && newDirection==8) ||
+		        (snakeHead.direction==8 && newDirection==2) ||
+		        (snakeHead.direction==4 && newDirection==6) ||
+		        (snakeHead.direction==6 && newDirection==4) )
+		        {
+		            newDirection=-1;
+		            invertSnake();
+		                for(i=0;i<100;i++)
+		                Kpressed[i]=false;
+		        }*/
+
+		    //he changed direction
+		    if(newDirection!=-1 && snakeHead.direction!=newDirection)
+		    {
+		        var oldHead=snakeHead;
+		        snakeHead=new Object();
+		        snakeHead.x=oldHead.x;
+		        snakeHead.y=oldHead.y;
+		        snakeHead.z=oldHead.z;
+		        snakeHead.tdObject=new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: tailColor } ) );
+			    snakeHead.tdObject.position.x=snakeHead.x;
+			    snakeHead.tdObject.position.y=snakeHead.y;
+			    snakeHead.tdObject.position.z=snakeHead.z;
+			    snakeHead.tdObject.scale.x=snakeSize;
+			    snakeHead.tdObject.scale.y=snakeSize;
+			    snakeHead.tdObject.scale.z=snakeSize;
+			    room.add(snakeHead.tdObject);
+
+		        snakeHead.direction=newDirection;
+		        snakeHead.meat=0;
+		        snakeHead.growth=1;
+		        snakeHead.next=oldHead;
+		        snakeHead.tdHeadObject=oldHead.tdHeadObject;
+		    }
+		}
 		//3d Functions
 		function init() {
 			scene = new THREE.Scene();
@@ -197,20 +251,6 @@
 			var light = new THREE.HemisphereLight( 0xffffff, 0x444444 );
 			light.position.set( 1, 1, 1 );
 			scene.add( light );
-			//var geometry = new THREE.IcosahedronBufferGeometry( radius, 2 );
-			var geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 );
-			for ( var i = 0; i < 100; i ++ ) {
-				var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
-				object.position.x = 0;//Math.random() * 4 - 2;
-				object.position.y = 0;//Math.random() * 4;
-				object.position.z = 0;//Math.random() * 4 - 2;
-				/*object.userData.velocity = new THREE.Vector3();
-				object.userData.velocity.x = Math.random() * 0.01 - 0.005;
-				object.userData.velocity.y = Math.random() * 0.01 - 0.005;
-				object.userData.velocity.z = Math.random() * 0.01 - 0.005;*/
-				room.add( object );
-			}
-			//
 			renderer = new THREE.WebGLRenderer( { antialias: true } );
 			renderer.setPixelRatio( window.devicePixelRatio );
 			renderer.setSize( window.innerWidth, window.innerHeight );
@@ -218,7 +258,7 @@
 			document.body.appendChild( renderer.domElement );
 			//
 			document.body.appendChild( THREE.WEBVR.createButton( renderer ) );
-			// controllers
+			// controllers (snake functions)
 			function onSelectStart() {
 				this.userData.isSelecting = true;
 				this.userData.startPx=this.position.x;
@@ -230,7 +270,7 @@
 				this.userData.endPx=this.position.x;
 				this.userData.endPy=this.position.y;
 				this.userData.endPz=this.position.z;
-				snakeHead.direction=getChosenDirection(this.userData.startPx-this.userData.endPx,this.userData.startPy-this.userData.endPy,this.userData.startPz-this.userData.endPz);
+				changeDirection(getChosenDirection(this.userData.startPx-this.userData.endPx,this.userData.startPy-this.userData.endPy,this.userData.startPz-this.userData.endPz));
 			}
 			controller1 = renderer.vr.getController( 0 );
 			controller1.addEventListener( 'selectstart', onSelectStart );
@@ -257,34 +297,15 @@
 			camera.updateProjectionMatrix();
 			renderer.setSize( window.innerWidth, window.innerHeight );
 		}
-		function handleController( controller ) {
-			if ( controller.userData.isSelecting ) {
-				var object = room.children[ count ++ ];
-				object.position.copy( controller.position );
-				/*object.userData.velocity.x = ( Math.random() - 0.5 ) * 3;
-				object.userData.velocity.y = ( Math.random() - 0.5 ) * 3;
-				object.userData.velocity.z = ( Math.random() - 9 );
-				object.userData.velocity.applyQuaternion( controller.quaternion );*/
-				if ( count === room.children.length ) count = 0;
-			}
-		}
 		//
 		function animate() {
 			renderer.setAnimationLoop( render );
 		}
 		function render() {
-			/*handleController( controller1 );
-			handleController( controller2 );*/
+
 			//snake functions
-			moveSnake(snakeHead);
-			//
-			var delta = clock.getDelta() * 0.8; // slow down simulation
-			for ( var i = 0; i < room.children.length; i ++ ) {
-				var object = room.children[ i ];
-				/*object.position.x += object.userData.velocity.x * delta;
-				object.position.y += object.userData.velocity.y * delta;
-				object.position.z += object.userData.velocity.z * delta;*/
-			}
+			moveSnake();
+
 			renderer.render( scene, camera );
 		}
 		/*#############
