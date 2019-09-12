@@ -12,7 +12,7 @@
 		var level;
 		var snakeHead;
 		var snakeSize=0.1;
-		var snakeSpeed=0.001;
+		var snakeSpeed=0.005;
 		var snakeColor=0x00FF00;
 		var tailColor=0x00AA00;
 		var snakeGrowing=0;
@@ -72,14 +72,14 @@
 		    room.add(snakeHead.tdObject);
 
 		    //DEBUG
-		    snakeGrowing=60;
+		    //snakeGrowing=60;
 		    //snakeHead.direction=6;
 		}
 		function generateApple()
 		{
 		    var apple=new Object();
 		    apple.nutriment=rand(20,100)*0.01;
-		    apple.size=rand(200,1050)*0.001*snakeSize;
+		    apple.size=rand(500,1050)*0.001*snakeSize;
 		    apple.color=0xAA0000;
 		    apple.growth=0;
 		    
@@ -476,7 +476,7 @@
 		        if(newFoodCooldown--<0)
 		        {
 		            generateApple();
-		            newFoodCooldown=rand(200,900);
+		            newFoodCooldown=rand(200,900)+foods.length*10;
 		        }
 		        if(checkCollisions())
 		        {
