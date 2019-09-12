@@ -37,6 +37,8 @@
 		//Snake functions
 		function generateLevel()
 		{
+			level=0;
+
 		    snakeHead=new Object();
 		    snakeHead.x=0;
 		    snakeHead.y=1;
@@ -68,6 +70,10 @@
 		    snakeHead.tdObject.scale.y=snakeSize;
 		    snakeHead.tdObject.scale.z=snakeSize;
 		    room.add(snakeHead.tdObject);
+
+		    //DEBUG
+		    snakeGrowing=60;
+		    //snakeHead.direction=4;
 		}
 		function generateApple()
 		{
@@ -91,6 +97,20 @@
 		    room.add(apple.tdObject);
 
 		    foods.push(apple);
+		}
+		function gameOver()
+		{
+		    level=2;
+		    for(var i=0;i<foods.length;i++)
+		        foods[i].growth=2;
+		    var tmp=snakeHead;
+		    while(tmp!=null)
+		    {
+		        tmp.growth=2;
+		        tmp=tmp.next;
+		    }
+		    gameOverCoooldown=300;
+		    room.remove(snakeHead.tdHeadObject);
 		}
 		function moveSnake()
 		{
@@ -224,17 +244,16 @@
 		    //change direction cooldown
 		    if(snakeHead.meat<snakeSize)
 		        newDirection=-1;
-		    /*/TODO not allowed changes (if you do, the snake inverts?)
+		    //TODO not allowed changes
 		    if( (snakeHead.direction==2 && newDirection==8) ||
 		        (snakeHead.direction==8 && newDirection==2) ||
 		        (snakeHead.direction==4 && newDirection==6) ||
-		        (snakeHead.direction==6 && newDirection==4) )
+		        (snakeHead.direction==6 && newDirection==4) ||
+		        (snakeHead.direction==5 && newDirection==7) ||
+		        (snakeHead.direction==7 && newDirection==5) )
 		        {
 		            newDirection=-1;
-		            invertSnake();
-		                for(i=0;i<100;i++)
-		                Kpressed[i]=false;
-		        }*/
+		        }
 
 		    //he changed direction
 		    if(newDirection!=-1 && snakeHead.direction!=newDirection)
@@ -259,6 +278,103 @@
 		        snakeHead.next=oldHead;
 		        snakeHead.tdHeadObject=oldHead.tdHeadObject;
 		    }
+		}
+		function checkCollisions()
+		{
+			var piece=snakeHead;
+		    var res=false;
+		    //borderds
+		    if(piece.x-snakeSize/2<-2)
+		        res=true;
+		    else if(piece.x+snakeSize/2>2)
+		        res=true;
+		    else if(piece.y+snakeSize/2>4)
+		        res=true;
+		    else if(piece.y-snakeSize/2<0)
+		        res=true;
+	        else if(piece.z+snakeSize/2>2)
+		        res=true;
+		    else if(piece.z-snakeSize/2<-2)
+		        res=true;
+		    var tmp=piece.next;
+		    var r=null;
+		    while(tmp!=null)// && !res)
+		    {
+		        r=getSnakePieceRect(tmp);
+		        /*console.log("x: ",r.x,"<",piece.x,"<",r.x+r.width);
+		        console.log("y: ",r.y,"<",piece.y,"<",r.y+r.height);
+		        console.log("z: ",r.z,"<",piece.z,"<",r.z+r.depth);
+		        console.log("--------------");*/
+		        if (piece.x>r.x && piece.x<r.x+r.width && 
+		            piece.y>r.y && piece.y<r.y+r.height &&
+		            piece.z>r.z && piece.z<r.z+r.depth)
+		            {
+		                res=true;
+		            }
+		        tmp=tmp.next;
+		    }
+		    return res;
+		}
+		function getSnakePieceRect(piece)
+		{
+		    var res=new Object();
+		    var size=snakeSize;//TODO debug
+		    if(piece.direction==8)//top
+		    {
+		        res.x=piece.x-size/2;
+		        res.y=piece.y-piece.meat-size;
+		        res.z=piece.z-size/2;
+		        res.width=size;
+		        res.height=piece.meat+size;
+		        res.depth=size;
+		    }
+		    else if(piece.direction==2)//bottom
+		    {
+		        res.x=piece.x-size/2;
+		        res.y=piece.y;
+		        res.z=piece.z-size/2;
+		        res.width=size;
+		        res.height=piece.meat+size;
+		        res.depth=size;
+		    }
+		    else if(piece.direction==4)//left
+		    {
+		        res.x=piece.x;
+		        res.y=piece.y-size/2;
+		        res.z=piece.z-size/2;
+		        res.width=piece.meat+size;
+		        res.height=size;
+		        res.depth=size;
+		    }
+		    else if(piece.direction==6)//right
+		    {
+		        res.x=piece.x-piece.meat-size;
+		        res.y=piece.y-size/2;
+		        res.z=piece.z-size/2;
+		        res.width=piece.meat+size;
+		        res.height=size;
+		        res.depth=size;
+		    }
+		    else if(piece.direction==5)//allontana
+		    {
+		        res.x=piece.x-size/2;
+		        res.y=piece.y-size/2;
+		        res.z=piece.z-piece.meat-size;
+		        res.width=size;
+		        res.height=size;
+		        res.depth=piece.meat+size;
+		    }
+		    else if(piece.direction==6)//allontana
+		    {
+		        res.x=piece.x-size/2;
+		        res.y=piece.y-size/2;
+		        res.z=piece.z;
+		        res.width=size;
+		        res.height=size;
+		        res.depth=piece.meat+size;
+		    }
+
+		    return res;
 		}
 		//3d Functions
 		function init() {
@@ -324,34 +440,80 @@
 		function animate() {
 			renderer.setAnimationLoop( render );
 		}
-		function render() {
-
-			//snake functions
-			moveSnake();
-			for(var i=0;i<foods.length;i++)
+		function render()
+		{
+			//stop time
+			if(controller1.userData.isSelecting && controller2.userData.isSelecting)
 			{
-				 if(distanceFrom(snakeHead,foods[i])<snakeSize/2+foods[i].size/2)
-	            {
-	                snakeGrowing=foods[i].nutriment;
-	                room.remove(foods[i].tdObject);
-	                foods.splice(i,1);
-	                i=i-1;
-	                continue;
-	            }
-				if(foods[i].growth<=1)
+				level=1;
+			}
+			else if(level!=2) 
+				level=0;
+			//snake functions
+			if(level==0)
+			{
+				moveSnake();
+				for(var i=0;i<foods.length;i++)
 				{
-                    foods[i].growth+=0.01;
+					//eat an apple
+					if(distanceFrom(snakeHead,foods[i])<snakeSize/2+foods[i].size/2)
+		            {
+		                snakeGrowing=foods[i].nutriment;
+		                room.remove(foods[i].tdObject);
+		                foods.splice(i,1);
+		                i=i-1;
+		                continue;
+		            }
+		            //animazione di spawn mele
+					if(foods[i].growth<=1)
+					{
+	                    foods[i].growth+=0.01;
+	                    foods[i].tdObject.scale.x=foods[i].size*foods[i].growth;
+					    foods[i].tdObject.scale.y=foods[i].size*foods[i].growth;
+					    foods[i].tdObject.scale.z=foods[i].size*foods[i].growth;
+	                }
+	            }
+		        if(newFoodCooldown--<0)
+		        {
+		            generateApple();
+		            newFoodCooldown=rand(200,900);
+		        }
+		        if(checkCollisions())
+		        {
+		        	gameOver();
+		        }
+			}
+			else if(level==2)
+			{
+				//cibo
+				for(var i=0;i<foods.length;i++)
+				if(foods[i].growth>0)
+				{
+                    foods[i].growth-=0.1;
                     foods[i].tdObject.scale.x=foods[i].size*foods[i].growth;
 				    foods[i].tdObject.scale.y=foods[i].size*foods[i].growth;
 				    foods[i].tdObject.scale.z=foods[i].size*foods[i].growth;
                 }
-            }
-
-	        if(newFoodCooldown--<0)
-	        {
-	            generateApple();
-	            newFoodCooldown=rand(200,900);
-	        }
+                else room.remove(foods[i].tdObject);
+                var tmp=snakeHead;
+			    while(tmp!=null)
+			    {
+			    	if(tmp.growth>0)
+			    	{
+			    		tmp.growth-=0.1;
+	                    tmp.tdObject.scale.x=snakeSize*tmp.growth;
+					    tmp.tdObject.scale.y=snakeSize*tmp.growth;
+					    tmp.tdObject.scale.z=snakeSize*tmp.growth;
+			    	}
+			    	else room.remove(tmp.tdObject);
+			        tmp=tmp.next;
+			    }
+			    if(gameOverCoooldown--<0)
+			    {
+			    	generateLevel();
+			    }
+			}
+			
 
 			renderer.render( scene, camera );
 		}
