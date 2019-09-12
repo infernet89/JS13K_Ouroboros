@@ -73,7 +73,7 @@
 
 		    //DEBUG
 		    snakeGrowing=60;
-		    //snakeHead.direction=4;
+		    //snakeHead.direction=6;
 		}
 		function generateApple()
 		{
@@ -325,7 +325,7 @@
 		        res.y=piece.y-piece.meat-size;
 		        res.z=piece.z-size/2;
 		        res.width=size;
-		        res.height=piece.meat+size;
+		        res.height=piece.meat;
 		        res.depth=size;
 		    }
 		    else if(piece.direction==2)//bottom
@@ -334,7 +334,7 @@
 		        res.y=piece.y;
 		        res.z=piece.z-size/2;
 		        res.width=size;
-		        res.height=piece.meat+size;
+		        res.height=piece.meat;
 		        res.depth=size;
 		    }
 		    else if(piece.direction==4)//left
@@ -342,7 +342,7 @@
 		        res.x=piece.x;
 		        res.y=piece.y-size/2;
 		        res.z=piece.z-size/2;
-		        res.width=piece.meat+size;
+		        res.width=piece.meat;
 		        res.height=size;
 		        res.depth=size;
 		    }
@@ -351,7 +351,7 @@
 		        res.x=piece.x-piece.meat-size;
 		        res.y=piece.y-size/2;
 		        res.z=piece.z-size/2;
-		        res.width=piece.meat+size;
+		        res.width=piece.meat;
 		        res.height=size;
 		        res.depth=size;
 		    }
@@ -362,16 +362,16 @@
 		        res.z=piece.z-piece.meat-size;
 		        res.width=size;
 		        res.height=size;
-		        res.depth=piece.meat+size;
+		        res.depth=piece.meat;
 		    }
-		    else if(piece.direction==6)//allontana
+		    else if(piece.direction==7)//avvicina
 		    {
 		        res.x=piece.x-size/2;
 		        res.y=piece.y-size/2;
 		        res.z=piece.z;
 		        res.width=size;
 		        res.height=size;
-		        res.depth=piece.meat+size;
+		        res.depth=piece.meat;
 		    }
 
 		    return res;
