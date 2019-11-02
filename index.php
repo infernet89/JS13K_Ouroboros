@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Ouroboros TEST</title>
+		<title>2 Ouroboros TEST</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 	
@@ -31,8 +31,13 @@
 		var relativeVelocity = new THREE.Vector3();
 		var clock = new THREE.Clock();
 		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-		init();
-		animate();
+		var font=undefined;
+		var loader = new THREE.FontLoader();
+		loader.load( './fonts/helvetiker_regular.typeface.json', function ( response ) {
+			font=response;
+			init();
+			animate();
+		});
 
 		//Snake functions
 		function generateLevel()
@@ -79,7 +84,7 @@
 		{
 		    var apple=new Object();
 		    apple.nutriment=rand(20,100)*0.01;
-		    apple.size=rand(500,1050)*0.001*snakeSize;
+		    apple.size=snakeSize;//rand(500,1050)*0.001*snakeSize;
 		    apple.color=0xAA0000;
 		    apple.growth=0;
 		    
@@ -383,11 +388,11 @@
 			camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 10 );
 			room = new THREE.LineSegments(
 				new BoxLineGeometry( 4, 4, 4, 10, 10, 10 ),
-				new THREE.LineBasicMaterial( { color: 0xB0F0B0 } )
+				new THREE.LineBasicMaterial( { color: 0x204020 } )
 			);
 			room.geometry.translate( 0, 2, 0 );
 			scene.add( room );
-			var light = new THREE.HemisphereLight( 0xffffff, 0x444444 );
+			var light = new THREE.HemisphereLight( 0xffffff, 0x101010 );
 			light.position.set( 1, 1, 1 );
 			scene.add( light );
 			renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -428,6 +433,41 @@
 			controller2.add( new THREE.Line( geometry, material ) );
 			//
 			window.addEventListener( 'resize', onWindowResize, false );
+
+			//<TEXT>
+			var txtgeometry = new THREE.TextGeometry( 'Hello three.js!', {
+					font: font,
+					size: 80,
+					height: 5,
+					curveSegments: 12,
+					bevelEnabled: true,
+					bevelThickness: 10,
+					bevelSize: 8,
+					bevelOffset: 0,
+					bevelSegments: 5
+				} );
+			var txt = new THREE.Mesh( txtgeometry, new THREE.MeshLambertMaterial( { color: "0xffffff" } ) );
+			console.log("txtgeometry: ",txtgeometry);
+			scene.add(txt);
+			/*
+			var loader = new THREE.FontLoader();
+			loader.load( './fonts/helvetiker_regular.typeface.json', function ( font ) {
+
+				var txtgeometry = new THREE.TextGeometry( 'Hello three.js!', {
+					font: font,
+					size: 80,
+					height: 5,
+					curveSegments: 12,
+					bevelEnabled: true,
+					bevelThickness: 10,
+					bevelSize: 8,
+					bevelOffset: 0,
+					bevelSegments: 5
+				} );
+			} );*/
+			
+			//scene.add(loader);
+			//</TEXT>
 
 			generateLevel();
 		}
