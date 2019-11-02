@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>2 Ouroboros TEST</title>
+		<title>Ouroboros TEST</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 	
@@ -31,14 +31,9 @@
 		var relativeVelocity = new THREE.Vector3();
 		var clock = new THREE.Clock();
 		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-		var font=undefined;
-		var loader = new THREE.FontLoader();
-		loader.load( './fonts/helvetiker_regular.typeface.json', function ( response ) {
-			font=response;
-			init();
-			animate();
-		});
-
+		
+		init();
+		animate();
 		//Snake functions
 		function generateLevel()
 		{
@@ -435,38 +430,31 @@
 			window.addEventListener( 'resize', onWindowResize, false );
 
 			//<TEXT>
-			var txtgeometry = new THREE.TextGeometry( 'Hello three.js!', {
-					font: font,
-					size: 80,
-					height: 5,
-					curveSegments: 12,
-					bevelEnabled: true,
-					bevelThickness: 10,
-					bevelSize: 8,
-					bevelOffset: 0,
-					bevelSegments: 5
-				} );
-			var txt = new THREE.Mesh( txtgeometry, new THREE.MeshLambertMaterial( { color: "0xffffff" } ) );
-			console.log("txtgeometry: ",txtgeometry);
-			scene.add(txt);
-			/*
-			var loader = new THREE.FontLoader();
-			loader.load( './fonts/helvetiker_regular.typeface.json', function ( font ) {
+			const text_loader = new THREE.FontLoader()
+	        /*text_loader.load("./fonts/Roboto-Black.ttf",data => {*/
+	        	text_loader.load('fonts/helvetiker_regular.typeface.json', function (font) {
+	            console.log("loaded")
+	            /*const font = new THREE.FontLoader().parse(data)*/
+	            const geo = new THREE.TextBufferGeometry("This is not a test.",{
+	                font:font,
+	                size: 0.2,
+	                height:0.02,
+	                bevelEnabled:false,
+	                bevelThickness:0.02,
+	                bevelSize: 0.05,
+	            })
+	            geo.center()
+	            const mesh = new THREE.Mesh(geo,
+	                new THREE.MeshStandardMaterial({
+	                    color:0xffffff,
+	                    metalness:0.0,
+	                    roughness:0.5
+	                })
+	            )
+	            mesh.position.set(0,1,-2)
+	            room.add(mesh)
+	        })
 
-				var txtgeometry = new THREE.TextGeometry( 'Hello three.js!', {
-					font: font,
-					size: 80,
-					height: 5,
-					curveSegments: 12,
-					bevelEnabled: true,
-					bevelThickness: 10,
-					bevelSize: 8,
-					bevelOffset: 0,
-					bevelSegments: 5
-				} );
-			} );*/
-			
-			//scene.add(loader);
 			//</TEXT>
 
 			generateLevel();
