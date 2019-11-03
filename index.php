@@ -37,6 +37,7 @@
 		var textColor=0xffffff;
 		var textMesh1=undefined,textMesh2=undefined,textMesh3=undefined,textMesh4=undefined;
 		var score=0;
+		var tutorialEnabled=true;
 		
 		init();
 		animate();
@@ -79,14 +80,7 @@
 			if(textMesh4!=undefined)
 				room.remove(textMesh4);
 			//create geometry for new text
-			const geo = new THREE.TextBufferGeometry(text,{
-	                font:font,
-	                size: 0.1,
-	                height:0.002,
-	                bevelEnabled:false,
-	                bevelThickness:0.02,
-	                bevelSize: 0.05,
-	            });
+			const geo = new THREE.TextBufferGeometry(text,{font:font,size: 0.1,height:0.002});
             geo.center();
 	        //create and reposition meshes   
             textMesh1 = new THREE.Mesh(geo,
@@ -113,6 +107,11 @@
             textMesh4.rotateY(-Math.PI/2);
             textMesh4.position.set(2,2,0);
             room.add(textMesh4);
+
+            if(tutorialEnabled)
+            {
+            	var geo1=null
+            }
 		}
 		function updateScore(amount)
 		{
