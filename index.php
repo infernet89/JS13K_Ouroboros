@@ -24,16 +24,104 @@
 		import * as THREE from './three.module.js';
 		import { BoxLineGeometry } from './BoxLineGeometry.js';
 		var camera, scene, renderer;
-		var controller1, controller2;
+		var controller1, controller2,lastActiveController;
 		var room;
 		var count = 0;
 		var normal = new THREE.Vector3();
 		var relativeVelocity = new THREE.Vector3();
 		var clock = new THREE.Clock();
 		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+
+		var font=undefined;
+		var text = "SAND ADDER\n\nby Infernet89";
+		var textColor=0xffffff;
+		var textMesh1=undefined,textMesh2=undefined,textMesh3=undefined,textMesh4=undefined;
+		var score=0;
 		
 		init();
 		animate();
+		//utility functions
+		function vibrate(amount,length,controller=null)
+		{
+			if(!controller1.haptic)
+			{
+				var gamepads = navigator.getGamepads();
+	        	//console.log("tst: ",gamepads);
+	        	if(gamepads && gamepads.length>0 && gamepads[0] && "hapticActuators" in gamepads[0] && gamepads[0].hapticActuators.length > 0)
+	        		controller1.haptic=gamepads[0].hapticActuators[0];
+	        	if(gamepads && gamepads.length>1 && gamepads[1] && "hapticActuators" in gamepads[1] && gamepads[1].hapticActuators.length > 0)
+	        		controller2.haptic=gamepads[1].hapticActuators[0];
+			}
+			if(controller1.haptic)
+			{
+				if(controller!=null)
+				{
+					controller.haptic.pulse(amount,length);
+				}
+				else
+				{
+					controller1.haptic.pulse(amount,length);
+					controller2.haptic.pulse(amount,length);
+				}
+			}
+		}
+		function refreshText()
+		{
+			if(font==undefined)
+				return;
+			//remove what we added
+			if(textMesh1!=undefined)
+				room.remove(textMesh1);
+			if(textMesh2!=undefined)
+				room.remove(textMesh2);
+			if(textMesh3!=undefined)
+				room.remove(textMesh3);
+			if(textMesh4!=undefined)
+				room.remove(textMesh4);
+			//create geometry for new text
+			const geo = new THREE.TextBufferGeometry(text,{
+	                font:font,
+	                size: 0.1,
+	                height:0.002,
+	                bevelEnabled:false,
+	                bevelThickness:0.02,
+	                bevelSize: 0.05,
+	            });
+            geo.center();
+	        //create and reposition meshes   
+            textMesh1 = new THREE.Mesh(geo,
+                new THREE.MeshStandardMaterial({
+                    color:textColor,
+                    metalness:0.0,
+                    roughness:0.5
+                })
+            );
+            textMesh1.position.set(0,2,-2);
+            room.add(textMesh1);
+
+            textMesh2=textMesh1.clone();
+            textMesh2.rotateY(Math.PI);
+            textMesh2.position.set(0,2,2);
+            room.add(textMesh2);
+
+            textMesh3=textMesh1.clone();
+            textMesh3.rotateY(Math.PI/2);
+            textMesh3.position.set(-2,2,0);
+            room.add(textMesh3);
+
+            textMesh4=textMesh1.clone();
+            textMesh4.rotateY(-Math.PI/2);
+            textMesh4.position.set(2,2,0);
+            room.add(textMesh4);
+		}
+		function updateScore(amount)
+		{
+			score+=amount;
+			text="SCORE: "+score;
+			textColor=0x333333;
+			refreshText();
+			vibrate(0.3,200);
+		}
 		//Snake functions
 		function generateLevel()
 		{
@@ -74,6 +162,10 @@
 		    //DEBUG
 		    //snakeGrowing=60;
 		    //snakeHead.direction=6;
+		    score=0;
+		    if(text.includes("GAME OVER"))
+		    	updateScore(0);
+		    vibrate(1.0,400);
 		}
 		function generateApple()
 		{
@@ -111,6 +203,11 @@
 		    }
 		    gameOverCoooldown=300;
 		    room.remove(snakeHead.tdHeadObject);
+
+		    text="GAME OVER\n\n   SCORE: "+score;
+			textColor=0xffffff;
+			refreshText();
+			vibrate(1.0,1000);
 		}
 		function moveSnake()
 		{
@@ -277,6 +374,8 @@
 		        snakeHead.growth=1;
 		        snakeHead.next=oldHead;
 		        snakeHead.tdHeadObject=oldHead.tdHeadObject;
+
+		        vibrate(0.9,50,lastActiveController);
 		    }
 		}
 		function checkCollisions()
@@ -409,6 +508,7 @@
 				this.userData.endPx=this.position.x;
 				this.userData.endPy=this.position.y;
 				this.userData.endPz=this.position.z;
+				lastActiveController=this;
 				changeDirection(getChosenDirection(this.userData.startPx-this.userData.endPx,this.userData.startPy-this.userData.endPy,this.userData.startPz-this.userData.endPz));
 			}
 			controller1 = renderer.vr.getController( 0 );
@@ -428,34 +528,15 @@
 			controller2.add( new THREE.Line( geometry, material ) );
 			//
 			window.addEventListener( 'resize', onWindowResize, false );
-
-			//<TEXT>
+			//load font
 			const text_loader = new THREE.FontLoader()
-	        /*text_loader.load("./fonts/Roboto-Black.ttf",data => {*/
-	        	text_loader.load('fonts/helvetiker_regular.typeface.json', function (font) {
-	            console.log("loaded")
-	            /*const font = new THREE.FontLoader().parse(data)*/
-	            const geo = new THREE.TextBufferGeometry("This is not a test.",{
-	                font:font,
-	                size: 0.2,
-	                height:0.02,
-	                bevelEnabled:false,
-	                bevelThickness:0.02,
-	                bevelSize: 0.05,
-	            })
-	            geo.center()
-	            const mesh = new THREE.Mesh(geo,
-	                new THREE.MeshStandardMaterial({
-	                    color:0xffffff,
-	                    metalness:0.0,
-	                    roughness:0.5
-	                })
-	            )
-	            mesh.position.set(0,1,-2)
-	            room.add(mesh)
-	        })
-
-			//</TEXT>
+	        	text_loader.load('fonts/helvetiker_regular.typeface.json', function (fontf) {
+	        	font=fontf;
+	            refreshText();
+	        });
+        	//haptic
+        	controller1.haptic=null;
+        	controller2.haptic=null;
 
 			generateLevel();
 		}
@@ -486,6 +567,7 @@
 					//eat an apple
 					if(distanceFrom(snakeHead,foods[i])<snakeSize/2+foods[i].size/2)
 		            {
+		            	updateScore(50);
 		                snakeGrowing=foods[i].nutriment;
 		                room.remove(foods[i].tdObject);
 		                foods.splice(i,1);
