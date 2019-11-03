@@ -35,7 +35,7 @@
 		var font=undefined;
 		var text = "SAND ADDER\n\nby Infernet89";
 		var textColor=0xffffff;
-		var textMesh1=undefined,textMesh2=undefined,textMesh3=undefined,textMesh4=undefined;
+		var textMesh1=undefined,textMesh2=undefined,textMesh3=undefined,textMesh4=undefined,tutorialMesh1=undefined,tutorialMesh2=undefined;
 		var score=0;
 		var tutorialEnabled=true;
 		
@@ -79,17 +79,15 @@
 				room.remove(textMesh3);
 			if(textMesh4!=undefined)
 				room.remove(textMesh4);
+			if(tutorialMesh1!=undefined)
+				controller1.remove(tutorialMesh1);
+			if(tutorialMesh2!=undefined)
+				controller2.remove(tutorialMesh2);
 			//create geometry for new text
 			const geo = new THREE.TextBufferGeometry(text,{font:font,size: 0.1,height:0.002});
             geo.center();
 	        //create and reposition meshes   
-            textMesh1 = new THREE.Mesh(geo,
-                new THREE.MeshStandardMaterial({
-                    color:textColor,
-                    metalness:0.0,
-                    roughness:0.5
-                })
-            );
+            textMesh1 = new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:textColor,metalness:0.0,roughness:0.5}));
             textMesh1.position.set(0,2,-2);
             room.add(textMesh1);
 
@@ -110,7 +108,16 @@
 
             if(tutorialEnabled)
             {
-            	var geo1=null
+            	var geo1=new THREE.TextBufferGeometry("TO MOVE\n  SNAKE",{font:font,size: 0.01,height:0.002});
+            	geo1.center();
+            	var geo2=new THREE.TextBufferGeometry("  DRAG AND RELASE IN\nTHE CHOSEN DIRECTION",{font:font,size: 0.01,height:0.002});
+            	geo2.center();
+            	tutorialMesh1 = new THREE.Mesh(geo1,new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.0,roughness:0.5}));
+            	tutorialMesh1.rotateX(-Math.PI/2);
+            	controller1.add(tutorialMesh1);
+            	tutorialMesh2 = new THREE.Mesh(geo2,new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.0,roughness:0.5}));
+            	tutorialMesh2.rotateX(-Math.PI/2);
+            	controller2.add(tutorialMesh2);
             }
 		}
 		function updateScore(amount)
@@ -375,6 +382,7 @@
 		        snakeHead.tdHeadObject=oldHead.tdHeadObject;
 
 		        vibrate(0.9,50,lastActiveController);
+		        tutorialEnabled=false;
 		    }
 		}
 		function checkCollisions()
