@@ -67,17 +67,17 @@
 	        	if(gamepads && gamepads.length>1 && gamepads[1] && "hapticActuators" in gamepads[1] && gamepads[1].hapticActuators.length > 0)
 	        		controller2.haptic=gamepads[1].hapticActuators[0];
 			}
-			if(controller1.haptic)
+
+			if(controller!=null && controller.haptic)
 			{
-				if(controller!=null)
-				{
-					controller.haptic.pulse(amount,length);
-				}
-				else
-				{
+				controller.haptic.pulse(amount,length);
+			}
+			else
+			{
+				if(controller1.haptic)
 					controller1.haptic.pulse(amount,length);
+				if(controller2.haptic)
 					controller2.haptic.pulse(amount,length);
-				}
 			}
 		}
 		function refreshText()
@@ -198,7 +198,7 @@
 		    apple.growth=0;
 		    
 		    apple.x=rand(-2000,2000)*0.0009;
-		    apple.y=rand(200,4000)*0.0009;
+		    apple.y=rand(200,3000)*0.0009;
 		    apple.z=rand(-2000,2000)*0.0009;
 
 		    apple.tdObject=new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: apple.color } ) );
