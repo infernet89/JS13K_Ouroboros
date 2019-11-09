@@ -48,7 +48,7 @@
 		{
 			//sounds
 			var audioLoader = new THREE.AudioLoader();
-			audioLoader.load('own3d.mp3', function(buffer) {
+			audioLoader.load('Sound/slither.wav', function(buffer) {
 				sound.setBuffer(buffer);
 				sound.setRefDistance(0.05);//più e basso, più la distanza è influente
 				sound.setLoop(true);
