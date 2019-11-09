@@ -38,10 +38,24 @@
 		var textMesh1=undefined,textMesh2=undefined,textMesh3=undefined,textMesh4=undefined,tutorialMesh1=undefined,tutorialMesh2=undefined;
 		var score=0;
 		var tutorialEnabled=true;
+		var soundLoaded=false;
+		var sound=null;
 		
 		init();
 		animate();
 		//utility functions
+		function loadSound()
+		{
+			//sounds
+			var audioLoader = new THREE.AudioLoader();
+			audioLoader.load('own3d.mp3', function(buffer) {
+				sound.setBuffer(buffer);
+				sound.setRefDistance(0.05);//più e basso, più la distanza è influente
+				sound.setLoop(true);
+				sound.play();
+			});
+			soundLoaded=true;
+		}
 		function vibrate(amount,length,controller=null)
 		{
 			if(!controller1.haptic)
@@ -164,6 +178,8 @@
 		    snakeHead.tdObject.scale.y=snakeSize;
 		    snakeHead.tdObject.scale.z=snakeSize;
 		    room.add(snakeHead.tdObject);
+
+		    snakeHead.tdHeadObject.add(sound);
 
 		    //DEBUG
 		    //snakeGrowing=60;
@@ -544,6 +560,10 @@
         	//haptic
         	controller1.haptic=null;
         	controller2.haptic=null;
+        	//sounds
+        	var listener = new THREE.AudioListener();
+			camera.add(listener);
+        	sound = new THREE.PositionalAudio(listener);
 
 			generateLevel();
 		}
@@ -558,6 +578,10 @@
 		}
 		function render()
 		{
+			if(!renderer.vr.isPresenting())
+				return;	
+			if(!soundLoaded && renderer.vr.isPresenting())
+				loadSound();
 			//stop time
 			if(controller1.userData.isSelecting && controller2.userData.isSelecting)
 			{
