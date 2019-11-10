@@ -101,7 +101,7 @@
 			const geo = new THREE.TextBufferGeometry(text,{font:font,size: 0.1,height:0.002});
             geo.center();
 	        //create and reposition meshes   
-            textMesh1 = new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:textColor,metalness:0.0,roughness:0.5}));
+            textMesh1 = new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:textColor}));
             textMesh1.position.set(0,2,-2);
             room.add(textMesh1);
 
@@ -124,13 +124,15 @@
             {
             	var geo1=new THREE.TextBufferGeometry("TO MOVE\n  SNAKE",{font:font,size: 0.01,height:0.002});
             	geo1.center();
-            	var geo2=new THREE.TextBufferGeometry("  DRAG AND RELASE IN\nTHE CHOSEN DIRECTION",{font:font,size: 0.01,height:0.002});
+            	var geo2=new THREE.TextBufferGeometry("  DRAG AND RELEASE IN\nTHE CHOSEN DIRECTION",{font:font,size: 0.01,height:0.002});
             	geo2.center();
             	tutorialMesh1 = new THREE.Mesh(geo1,new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.0,roughness:0.5}));
             	tutorialMesh1.rotateX(-Math.PI/2);
+            	tutorialMesh1.position.z=0.07;
             	controller1.add(tutorialMesh1);
             	tutorialMesh2 = new THREE.Mesh(geo2,new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.0,roughness:0.5}));
             	tutorialMesh2.rotateX(-Math.PI/2);
+            	tutorialMesh2.position.z=0.07;
             	controller2.add(tutorialMesh2);
             }
 		}
@@ -549,6 +551,11 @@
 			var material = new THREE.LineBasicMaterial( { vertexColors: true, blending: THREE.AdditiveBlending } );
 			controller1.add( new THREE.Line( geometry, material ) );
 			controller2.add( new THREE.Line( geometry, material ) );
+
+			var geometry = new THREE.SphereGeometry( 0.04, 32, 32 );
+			var material = new THREE.MeshLambertMaterial( {color: 0xffffff} );
+			controller1.add(new THREE.Mesh( geometry, material ));
+			controller2.add(new THREE.Mesh( geometry, material ));
 			//
 			window.addEventListener( 'resize', onWindowResize, false );
 			//load font
@@ -578,8 +585,6 @@
 		}
 		function render()
 		{
-			if(!renderer.vr.isPresenting())
-				return;	
 			if(!soundLoaded && renderer.vr.isPresenting())
 				loadSound();
 			//stop time
@@ -592,7 +597,9 @@
 			//snake functions
 			if(level==0)
 			{
-				moveSnake();
+				//we move snake only in VR mode
+				if(renderer.vr.isPresenting())
+					moveSnake();
 				for(var i=0;i<foods.length;i++)
 				{
 					//eat an apple
