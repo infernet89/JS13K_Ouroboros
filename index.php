@@ -40,6 +40,7 @@
 		var tutorialEnabled=true;
 		var soundLoaded=false;
 		var sound=null;
+		var particles=[];
 		
 		init();
 		animate();
@@ -48,7 +49,7 @@
 		{
 			//sounds
 			var audioLoader = new THREE.AudioLoader();
-			audioLoader.load('Sound/slither.wav', function(buffer) {
+			audioLoader.load('Sound/slither2.mp3', function(buffer) {
 				sound.setBuffer(buffer);
 				sound.setRefDistance(0.05);//più e basso, più la distanza è influente
 				sound.setLoop(true);
@@ -442,7 +443,7 @@
 		function getSnakePieceRect(piece)
 		{
 		    var res=new Object();
-		    var size=snakeSize;//TODO debug
+		    var size=snakeSize;
 		    if(piece.direction==8)//top
 		    {
 		        res.x=piece.x-size/2;
@@ -527,6 +528,11 @@
 				this.userData.startPx=this.position.x;
 				this.userData.startPy=this.position.y;
 				this.userData.startPz=this.position.z;
+				var material = new THREE.MeshLambertMaterial( {color: 0x00ff00} );
+				this.remove(this.userData.sphere);
+				this.userData.sphere=new THREE.Mesh( this.userData.geometry, material );
+				this.add(this.userData.sphere);
+				vibrate(0.9,5,this);
 			}
 			function onSelectEnd() {
 				this.userData.isSelecting = false;
@@ -534,6 +540,10 @@
 				this.userData.endPy=this.position.y;
 				this.userData.endPz=this.position.z;
 				lastActiveController=this;
+				var material = new THREE.MeshLambertMaterial( {color: 0xffffff} );
+				this.remove(this.userData.sphere);
+				this.userData.sphere=new THREE.Mesh( this.userData.geometry, material );
+				this.add(this.userData.sphere);
 				changeDirection(getChosenDirection(this.userData.startPx-this.userData.endPx,this.userData.startPy-this.userData.endPy,this.userData.startPz-this.userData.endPz));
 			}
 			controller1 = renderer.vr.getController( 0 );
@@ -545,17 +555,20 @@
 			controller2.addEventListener( 'selectend', onSelectEnd );
 			scene.add( controller2 );
 			// helpers
-			var geometry = new THREE.BufferGeometry();
-			geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( [ 0, 0, 0, 0, 0, - 1 ], 3 ) );
-			geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( [ 0.5, 0.5, 0.5, 0, 0, 0 ], 3 ) );
+			var lineGeometry = new THREE.BufferGeometry();
+			lineGeometry.addAttribute( 'position', new THREE.Float32BufferAttribute( [ 0, 0, 0, 0, 0, - 1 ], 3 ) );
+			lineGeometry.addAttribute( 'color', new THREE.Float32BufferAttribute( [ 0.5, 0.5, 0.5, 0, 0, 0 ], 3 ) );
 			var material = new THREE.LineBasicMaterial( { vertexColors: true, blending: THREE.AdditiveBlending } );
-			controller1.add( new THREE.Line( geometry, material ) );
-			controller2.add( new THREE.Line( geometry, material ) );
+			controller1.add( new THREE.Line( lineGeometry, material ) );
+			controller2.add( new THREE.Line( lineGeometry, material ) );
 
-			var geometry = new THREE.SphereGeometry( 0.04, 32, 32 );
+			controller1.userData.geometry = new THREE.SphereGeometry( 0.04, 32, 32 );
 			var material = new THREE.MeshLambertMaterial( {color: 0xffffff} );
-			controller1.add(new THREE.Mesh( geometry, material ));
-			controller2.add(new THREE.Mesh( geometry, material ));
+			controller1.userData.sphere=new THREE.Mesh( controller1.userData.geometry, material );
+			controller1.add(controller1.userData.sphere);
+			controller2.userData.geometry = new THREE.SphereGeometry( 0.04, 32, 32 );
+			controller2.userData.sphere=new THREE.Mesh( controller2.userData.geometry, material );
+			controller2.add(controller2.userData.sphere);
 			//
 			window.addEventListener( 'resize', onWindowResize, false );
 			//load font
@@ -571,7 +584,21 @@
         	var listener = new THREE.AudioListener();
 			camera.add(listener);
         	sound = new THREE.PositionalAudio(listener);
-
+        	//particles
+        	var tmp=null;
+        	for(var i=0;i<100;i++)
+        	{
+        		tmp=new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { color: 0xffffff , opacity: 0.3,transparent: true } ) );
+        		tmp.userData.ttl=0;
+			    tmp.scale.x=0.003;
+			    tmp.scale.y=0.003;
+			    tmp.scale.z=0.003;
+			    tmp.userData.dx=0;
+			    tmp.userData.dy=-0.001;
+			    tmp.userData.dz=0;
+			    particles.push(tmp);
+			    room.add(tmp);
+        	}
 			generateLevel();
 		}
 		function onWindowResize() {
@@ -600,6 +627,22 @@
 				//we move snake only in VR mode
 				if(renderer.vr.isPresenting())
 					moveSnake();
+				//move particles
+				for(var i=0;i<particles.length;i++)
+				{
+					//particles[i].position.x+=particles[i].userData.dx;
+					particles[i].position.y+=particles[i].userData.dy;
+					//particles[i].position.z+=particles[i].userData.dz;
+					particles[i].material.opacity-=0.001;
+					if(particles[i].userData.ttl--<0 || particles[i].position.y<0)
+					{
+					    particles[i].position.x=rand(-2000,2000)*0.0009;
+					    particles[i].position.y=rand(200,4000)*0.0009;
+					    particles[i].position.z=rand(-2000,2000)*0.0009;
+					    particles[i].userData.ttl=rand(300,3000);
+					    particles[i].material.opacity=particles[i].userData.ttl/5000;
+					}
+				}
 				for(var i=0;i<foods.length;i++)
 				{
 					//eat an apple
