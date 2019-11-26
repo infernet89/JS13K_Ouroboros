@@ -40,6 +40,7 @@
 		var tutorialEnabled=true;
 		var soundLoaded=false;
 		var sound=null;
+		var appleSound=null;
 		var particles=[];
 		
 		init();
@@ -54,6 +55,10 @@
 				sound.setRefDistance(0.05);//più e basso, più la distanza è influente
 				sound.setLoop(true);
 				sound.play();
+			});
+			audioLoader.load('Sound/eat.mp3', function(buffer) {
+				appleSound.setBuffer(buffer);
+				appleSound.setRefDistance(0.05);//più e basso, più la distanza è influente
 			});
 			soundLoaded=true;
 		}
@@ -149,6 +154,7 @@
 		function generateLevel()
 		{
 			level=0;
+			snakeSpeed=0.005;
 
 		    snakeHead=new Object();
 		    snakeHead.x=0;
@@ -183,14 +189,13 @@
 		    room.add(snakeHead.tdObject);
 
 		    snakeHead.tdHeadObject.add(sound);
-
-		    //DEBUG
-		    //snakeGrowing=60;
-		    //snakeHead.direction=6;
+		    snakeHead.tdHeadObject.add(appleSound);
 		    score=0;
 		    if(text.includes("GAME OVER"))
 		    	updateScore(0);
 		    vibrate(1.0,400);
+		    if(soundLoaded)
+		    	sound.play();
 		}
 		function generateApple()
 		{
@@ -214,6 +219,7 @@
 		    room.add(apple.tdObject);
 
 		    foods.push(apple);
+		    	
 		}
 		function gameOver()
 		{
@@ -233,6 +239,7 @@
 			textColor=0xffffff;
 			refreshText();
 			vibrate(1.0,1000);
+			sound.stop();
 		}
 		function moveSnake()
 		{
@@ -281,7 +288,7 @@
 		    //trova l'ultimo elemento
 		    while(piece.next!=null)
 		    {
-		        if(piece.next.meat<=snakeSpeed)
+		        if(piece.next.meat<=0)
 		        {
 		            room.remove(piece.next.tdObject);
 		            piece.next=null;
@@ -366,7 +373,7 @@
 		    //change direction cooldown
 		    if(snakeHead.meat<snakeSize)
 		        newDirection=-1;
-		    //TODO not allowed changes
+		    //not allowed changes
 		    if( (snakeHead.direction==2 && newDirection==8) ||
 		        (snakeHead.direction==8 && newDirection==2) ||
 		        (snakeHead.direction==4 && newDirection==6) ||
@@ -584,6 +591,7 @@
         	var listener = new THREE.AudioListener();
 			camera.add(listener);
         	sound = new THREE.PositionalAudio(listener);
+        	appleSound = new THREE.PositionalAudio(listener);
         	//particles
         	var tmp=null;
         	for(var i=0;i<100;i++)
@@ -626,53 +634,57 @@
 			{
 				//we move snake only in VR mode
 				if(renderer.vr.isPresenting())
+				{
 					moveSnake();
-				//move particles
-				for(var i=0;i<particles.length;i++)
-				{
-					//particles[i].position.x+=particles[i].userData.dx;
-					particles[i].position.y+=particles[i].userData.dy;
-					//particles[i].position.z+=particles[i].userData.dz;
-					particles[i].material.opacity-=0.001;
-					if(particles[i].userData.ttl--<0 || particles[i].position.y<0)
+					//move particles
+					for(var i=0;i<particles.length;i++)
 					{
-					    particles[i].position.x=rand(-2000,2000)*0.0009;
-					    particles[i].position.y=rand(200,4000)*0.0009;
-					    particles[i].position.z=rand(-2000,2000)*0.0009;
-					    particles[i].userData.ttl=rand(300,3000);
-					    particles[i].material.opacity=particles[i].userData.ttl/5000;
+						//particles[i].position.x+=particles[i].userData.dx;
+						particles[i].position.y+=particles[i].userData.dy;
+						//particles[i].position.z+=particles[i].userData.dz;
+						particles[i].material.opacity-=0.001;
+						if(particles[i].userData.ttl--<0 || particles[i].position.y<0)
+						{
+						    particles[i].position.x=rand(-2000,2000)*0.0009;
+						    particles[i].position.y=rand(200,4000)*0.0009;
+						    particles[i].position.z=rand(-2000,2000)*0.0009;
+						    particles[i].userData.ttl=rand(300,3000);
+						    particles[i].material.opacity=particles[i].userData.ttl/5000;
+						}
 					}
-				}
-				for(var i=0;i<foods.length;i++)
-				{
-					//eat an apple
-					if(distanceFrom(snakeHead,foods[i])<snakeSize/2+foods[i].size/2)
-		            {
-		            	updateScore(50);
-		                snakeGrowing=foods[i].nutriment;
-		                room.remove(foods[i].tdObject);
-		                foods.splice(i,1);
-		                i=i-1;
-		                continue;
-		            }
-		            //animazione di spawn mele
-					if(foods[i].growth<=1)
+					for(var i=0;i<foods.length;i++)
 					{
-	                    foods[i].growth+=0.01;
-	                    foods[i].tdObject.scale.x=foods[i].size*foods[i].growth;
-					    foods[i].tdObject.scale.y=foods[i].size*foods[i].growth;
-					    foods[i].tdObject.scale.z=foods[i].size*foods[i].growth;
-	                }
-	            }
-		        if(newFoodCooldown--<0)
-		        {
-		            generateApple();
-		            newFoodCooldown=rand(200,900)+foods.length*10;
-		        }
-		        if(checkCollisions())
-		        {
-		        	gameOver();
-		        }
+						//eat an apple
+						if(distanceFrom(snakeHead,foods[i])<snakeSize/2+foods[i].size/2)
+			            {
+			            	updateScore(50);
+			                snakeGrowing=foods[i].nutriment;
+			                room.remove(foods[i].tdObject);
+			                foods.splice(i,1);
+			                i=i-1;
+			                snakeSpeed+=0.001;//slightly increase speedd
+			                appleSound.play();
+			                continue;
+			            }
+			            //animazione di spawn mele
+						if(foods[i].growth<=1)
+						{
+		                    foods[i].growth+=0.01;
+		                    foods[i].tdObject.scale.x=foods[i].size*foods[i].growth;
+						    foods[i].tdObject.scale.y=foods[i].size*foods[i].growth;
+						    foods[i].tdObject.scale.z=foods[i].size*foods[i].growth;
+		                }
+		            }
+			        if(newFoodCooldown--<0)
+			        {
+			            generateApple();
+			            newFoodCooldown=rand(200,900)+foods.length*10;
+			        }
+			        if(checkCollisions())
+			        {
+			        	gameOver();
+			        }
+			    }
 			}
 			else if(level==2)
 			{
